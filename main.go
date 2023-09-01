@@ -2,14 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/schema"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
-	"time"
-
-	"github.com/gorilla/schema"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 /*
@@ -50,8 +47,8 @@ const (
 
 type Request struct {
 	Window                                string           `json:"window,omitempty"`
-	Resolution                            *metav1.Duration `json:"resolution,omitempty"`
-	Step                                  *metav1.Duration `json:"step,omitempty"`
+	Resolution                            string           `json:"resolution,omitempty"`
+	Step                                  string           `json:"step,omitempty"`
 	Aggregate                             []string         `json:"aggregate,omitempty"`
 	IncludeIdle                           bool             `json:"includeIdle,omitempty"`
 	Accumulate                            bool             `json:"accumulate,omitempty"`
@@ -70,8 +67,8 @@ accumulate=false'
 func main() {
 	r := Request{
 		Window:                                "6d",
-		Resolution:                            nil,
-		Step:                                  &metav1.Duration{Duration: 6 * 24 * time.Hour},
+		Resolution:                            "",
+		Step:                                  "6d",
 		Aggregate:                             []string{"controller"},
 		IncludeIdle:                           false,
 		Accumulate:                            false,
@@ -81,6 +78,7 @@ func main() {
 		IncludeAggregatedMetadata:             false,
 	}
 	var encoder = schema.NewEncoder()
+	encoder.SetAliasTag("json")
 	form := url.Values{}
 	err := encoder.Encode(r, form)
 	if err != nil {
