@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/schema"
 	"io"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"log"
 	"net/http"
+	"net/url"
+	"time"
 )
 
 /*
@@ -46,8 +49,8 @@ const (
 
 type Request struct {
 	Window                                string           `json:"window,omitempty"`
-	Resolution                            metav1.Duration  `json:"resolution"`
-	Step                                  metav1.Duration  `json:"step"`
+	Resolution                            *metav1.Duration `json:"resolution,omitempty"`
+	Step                                  *metav1.Duration `json:"step,omitempty"`
 	Aggregate                             []string         `json:"aggregate,omitempty"`
 	IncludeIdle                           bool             `json:"includeIdle,omitempty"`
 	Accumulate                            bool             `json:"accumulate,omitempty"`
@@ -57,9 +60,41 @@ type Request struct {
 	IncludeAggregatedMetadata             bool             `json:"includeAggregatedMetadata,omitempty"`
 }
 
+/*
+window=6d
+aggregate=controller
+step=1d
+accumulate=false'
+*/
 func main() {
+	r := Request{
+		Window:                                "6d",
+		Resolution:                            nil,
+		Step:                                  &metav1.Duration{Duration: 6 * 24 * time.Hour},
+		Aggregate:                             []string{"controller"},
+		IncludeIdle:                           false,
+		Accumulate:                            false,
+		AccumulateBy:                          "",
+		IdleByNode:                            false,
+		IncludeProportionalAssetResourceCosts: false,
+		IncludeAggregatedMetadata:             false,
+	}
+	var encoder = schema.NewEncoder()
+	form := url.Values{}
+	err := encoder.Encode(r, form)
+	if err != nil {
+		panic(err)
+	}
+
+	u, err := url.Parse("http://localhost:9091/model/allocation/compute")
+	if err != nil {
+		panic(err)
+	}
+	u.RawQuery = form.Encode()
+	fmt.Println(u.String())
+
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://localhost:9091/model/allocation/compute?window=6d&aggregate=controller&step=1d&accumulate=false", nil)
+	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		log.Fatal(err)
 	}
