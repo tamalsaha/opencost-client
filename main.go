@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 /*
@@ -46,16 +47,17 @@ const (
 )
 
 type Request struct {
-	Window                                string           `json:"window,omitempty"`
-	Resolution                            string           `json:"resolution,omitempty"`
-	Step                                  string           `json:"step,omitempty"`
-	Aggregate                             []string         `json:"aggregate,omitempty"`
-	IncludeIdle                           bool             `json:"includeIdle,omitempty"`
-	Accumulate                            bool             `json:"accumulate,omitempty"`
-	AccumulateBy                          AccumulateOption `json:"accumulateBy,omitempty"`
-	IdleByNode                            bool             `json:"idleByNode,omitempty"`
-	IncludeProportionalAssetResourceCosts bool             `json:"includeProportionalAssetResourceCosts,omitempty"`
-	IncludeAggregatedMetadata             bool             `json:"includeAggregatedMetadata,omitempty"`
+	Window                                string           `json:"window,omitempty" schema:"window,omitempty"`
+	Resolution                            string           `json:"resolution,omitempty" schema:"resolution,omitempty"`
+	Step                                  string           `json:"step,omitempty" schema:"step,omitempty"`
+	Aggregate                             []string         `json:"aggregate,omitempty" schema:"-"`
+	AggregateList                         string           `json:"-" schema:"aggregate,omitempty"`
+	IncludeIdle                           bool             `json:"includeIdle,omitempty" schema:"includeIdle,omitempty"`
+	Accumulate                            bool             `json:"accumulate,omitempty" schema:"accumulate,omitempty"`
+	AccumulateBy                          AccumulateOption `json:"accumulateBy,omitempty" schema:"accumulateBy,omitempty"`
+	IdleByNode                            bool             `json:"idleByNode,omitempty" schema:"idleByNode,omitempty"`
+	IncludeProportionalAssetResourceCosts bool             `json:"includeProportionalAssetResourceCosts,omitempty" schema:"includeProportionalAssetResourceCosts,omitempty"`
+	IncludeAggregatedMetadata             bool             `json:"includeAggregatedMetadata,omitempty" schema:"includeAggregatedMetadata,omitempty"`
 }
 
 /*
@@ -69,7 +71,7 @@ func main() {
 		Window:                                "6d",
 		Resolution:                            "",
 		Step:                                  "6d",
-		Aggregate:                             []string{"controller"},
+		Aggregate:                             []string{"controller", "xyz"},
 		IncludeIdle:                           false,
 		Accumulate:                            false,
 		AccumulateBy:                          "",
@@ -77,8 +79,10 @@ func main() {
 		IncludeProportionalAssetResourceCosts: false,
 		IncludeAggregatedMetadata:             false,
 	}
+	r.AggregateList = strings.Join(r.Aggregate, ",")
+
 	var encoder = schema.NewEncoder()
-	encoder.SetAliasTag("json")
+	// encoder.SetAliasTag("json")
 	form := url.Values{}
 	err := encoder.Encode(r, form)
 	if err != nil {
