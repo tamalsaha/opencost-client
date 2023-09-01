@@ -112,3 +112,5 @@ func main() {
 	}
 	fmt.Printf("%s\n", bodyText)
 }
+
+// app.kubernetes.io/name: opencost
